@@ -1,8 +1,8 @@
 name = "prerelease-registry"
 compatibility_date = "2022-01-31"
-account_id = "e35fd947284363a46fd7061634477114"
+account_id = "14cf59c1a69583bfb00a206a9295f7cf"
 
-route = { pattern = "prerelease-registry.devprod.cloudflare.dev", custom_domain = true }
+route = { pattern = "prerelease-registry.ixion-labs.workers.dev", custom_domain = true }
 
 [vars]
-GITHUB_USER = "workers-devprod"
+GITHUB_USER = "ixionlabs-devprod"

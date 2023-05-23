@@ -1,6 +1,6 @@
-import { getArtifactForWorkflowRun } from "../../../utils/getArtifactForWorkflowRun";
-import { generateGitHubFetch } from "../../../utils/gitHubFetch";
-import { repos } from "../../../utils/repoAllowlist";
+import { getArtifactForWorkflowRun } from "../../../../utils/getArtifactForWorkflowRun";
+import { generateGitHubFetch } from "../../../../utils/gitHubFetch";
+import { repos } from "../../../../utils/repoAllowlist";
 
 interface PullRequest {
 	head: { ref: string; sha: string };
@@ -16,11 +16,14 @@ const WORKFLOW_ID = 19014954;
 
 export const onRequestGet: PagesFunction<
 	{ GITHUB_API_TOKEN: string; GITHUB_USER: string },
-	"path" | "repo"
+	"account" | "repo" | "path"
 > = async ({ params, env, waitUntil }) => {
-	const { repo, path } = params;
+	const { account, repo, path } = params;
 
-	if (!Array.isArray(path) || !repos.includes(repo as string)) {
+	if (
+		!Array.isArray(path) ||
+		!repos.find(([a, r]) => a === account && r === repo)
+	) {
 		return new Response(null, { status: 404 });
 	}
 
@@ -33,7 +36,7 @@ export const onRequestGet: PagesFunction<
 
 	try {
 		const pullRequestsResponse = await gitHubFetch(
-			`https://api.github.com/repos/cloudflare/${repo}/pulls/${pullRequestID}`,
+			`https://api.github.com/repos/${account}/${repo}/pulls/${pullRequestID}`,
 			{
 				headers: {
 					Accept: "application/vnd.github.v3+json",
@@ -53,7 +56,7 @@ export const onRequestGet: PagesFunction<
 		} = (await pullRequestsResponse.json()) as PullRequest;
 
 		const workflowRunsResponse = await gitHubFetch(
-			`https://api.github.com/repos/cloudflare/${repo}/actions/runs?branch=${branch}&per_page=100&event=pull_request`,
+			`https://api.github.com/repos/${account}/${repo}/actions/runs?branch=${branch}&per_page=100&event=pull_request`,
 			{
 				headers: {
 					Accept: "application/vnd.github.v3+json",
@@ -82,6 +85,7 @@ export const onRequestGet: PagesFunction<
 
 		return getArtifactForWorkflowRun({
 			repo: repo as string,
+			account: account as string,
 			runID: workflowRun.id,
 			name,
 			gitHubFetch,

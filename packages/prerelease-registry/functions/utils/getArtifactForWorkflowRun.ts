@@ -9,18 +9,21 @@ const ONE_WEEK = 60 * 60 * 24 * 7;
 
 export const getArtifactForWorkflowRun = async ({
 	repo,
+	account,
 	runID,
 	name,
 	gitHubFetch,
 	waitUntil,
 }: {
 	repo: string;
+	account: string;
 	runID: number;
 	name: string;
 	gitHubFetch: ReturnType<typeof generateGitHubFetch>;
 	waitUntil: (promise: Promise<unknown>) => void;
 }) => {
-	const cacheKey = `https://prerelease-registry.devprod.cloudflare.dev/${repo}/runs/${runID}/${name}`;
+	console.log("name", name);
+	const cacheKey = `https://prerelease-registry.ixion-labs.workers.dev/${account}/${repo}/runs/${runID}/${name}`;
 
 	const cache = caches.default;
 
@@ -29,7 +32,7 @@ export const getArtifactForWorkflowRun = async ({
 
 	try {
 		const artifactsResponse = await gitHubFetch(
-			`https://api.github.com/repos/cloudflare/${repo}/actions/runs/${runID}/artifacts`,
+			`https://api.github.com/repos/${account}/${repo}/actions/runs/${runID}/artifacts`,
 			{
 				headers: {
 					Accept: "application/vnd.github.v3+json",
@@ -41,6 +44,8 @@ export const getArtifactForWorkflowRun = async ({
 				return new Response(null, { status: 502 });
 			}
 
+			console.log("artifactsResponse", artifactsResponse.status);
+			console.log("artifactsResponse", await artifactsResponse.text());
 			return new Response(null, { status: 404 });
 		}
 
@@ -51,7 +56,11 @@ export const getArtifactForWorkflowRun = async ({
 		const artifact = artifacts.find(
 			(artifactCandidate) => artifactCandidate.name === name
 		);
-		if (artifact === undefined) return new Response(null, { status: 404 });
+		if (artifact === undefined) {
+			console.log("artifact", artifact);
+			console.log(artifacts);
+			return new Response(null, { status: 404 });
+		}
 
 		const zipResponse = await gitHubFetch(artifact.archive_download_url);
 		if (!zipResponse.ok) {
@@ -59,6 +68,8 @@ export const getArtifactForWorkflowRun = async ({
 				return new Response(null, { status: 502 });
 			}
 
+			console.log("zipResponse", zipResponse.status);
+			console.log("zipResponse", await zipResponse.text());
 			return new Response(null, { status: 404 });
 		}
 
@@ -68,7 +79,11 @@ export const getArtifactForWorkflowRun = async ({
 		const files = zip.files;
 		const fileNames = Object.keys(files);
 		const tgzFileName = fileNames.find((fileName) => fileName.endsWith(".tgz"));
-		if (tgzFileName === undefined) return new Response(null, { status: 404 });
+		if (tgzFileName === undefined) {
+			console.log("tgzFileName", tgzFileName);
+			console.log(files);
+			return new Response(null, { status: 404 });
+		}
 
 		const tgzBlob = await files[tgzFileName].async("blob");
 		const response = new Response(tgzBlob, {

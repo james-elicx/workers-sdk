@@ -1,6 +1,4 @@
-export const repos = [
-	"workers-sdk",
-	"next-on-pages",
-	"pages-plugins",
-	"itty-router-openapi",
+export const repos: [string, string][] = [
+	["james-elicx", "itty-fs-router"],
+	["james-elicx", "next-on-pages"],
 ];
