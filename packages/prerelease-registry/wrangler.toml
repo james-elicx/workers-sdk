@@ -2,7 +2,10 @@ name = "prerelease-registry"
 compatibility_date = "2022-01-31"
 account_id = "14cf59c1a69583bfb00a206a9295f7cf"
 
-route = { pattern = "prerelease-registry.ixion-labs.workers.dev", custom_domain = true }
+workers_dev = true
 
 [vars]
 GITHUB_USER = "ixionlabs-devprod"
+
+[observability]
+enabled = true
